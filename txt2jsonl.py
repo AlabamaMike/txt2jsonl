@@ -10,6 +10,7 @@ import argparse
 import json
 import sys
 import os
+import re
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
@@ -73,8 +74,82 @@ class TextToJsonlConverter:
             chunks = text.split(self.delimiter)
             return [chunk.strip() for chunk in chunks if chunk.strip()]
 
+        elif self.split_mode == "section":
+            # Split by sections (detects section headers and groups related paragraphs)
+            # This mode looks for lines that appear to be section titles
+            # (e.g., all caps, numbered, or ending with specific patterns)
+            return self._split_by_sections(text)
+
         else:
             raise ValueError(f"Unknown split mode: {self.split_mode}")
+
+    def _split_by_sections(self, text: str) -> List[str]:
+        """
+        Split text by sections, detecting section headers automatically.
+
+        A section header is identified by patterns such as:
+        - Lines in ALL CAPS (optionally with punctuation)
+        - Lines ending with .— or similar patterns
+        - Lines that are significantly shorter and followed by longer content
+        """
+        paragraphs = text.split('\n\n')
+        sections = []
+        current_section = []
+
+        for para in paragraphs:
+            para = para.strip()
+            if not para:
+                continue
+
+            # Check if this paragraph looks like a section header
+            is_header = self._is_section_header(para)
+
+            if is_header and current_section:
+                # Save the previous section and start a new one
+                sections.append('\n\n'.join(current_section))
+                current_section = [para]
+            else:
+                # Add to current section
+                current_section.append(para)
+
+        # Don't forget the last section
+        if current_section:
+            sections.append('\n\n'.join(current_section))
+
+        return sections
+
+    def _is_section_header(self, text: str) -> bool:
+        """
+        Determine if a text block is likely a section header.
+
+        Heuristics:
+        - Contains mostly uppercase letters
+        - Ends with .— or similar patterns
+        - Is relatively short (< 200 chars) and has no lowercase paragraphs
+        """
+        # Get first line for analysis
+        first_line = text.split('\n')[0] if '\n' in text else text
+
+        # Pattern 1: Ends with .— (common in classical texts)
+        if re.search(r'\.—', first_line):
+            return True
+
+        # Pattern 2: Mostly uppercase (at least 70% of letters are uppercase)
+        letters = [c for c in first_line if c.isalpha()]
+        if letters:
+            uppercase_ratio = sum(1 for c in letters if c.isupper()) / len(letters)
+            if uppercase_ratio >= 0.7 and len(first_line) < 200:
+                return True
+
+        # Pattern 3: Starts with a number followed by a period (e.g., "1. Introduction")
+        if re.match(r'^\d+\.?\s+[A-Z]', first_line):
+            return True
+
+        # Pattern 4: Starts with "CHAPTER" or "SECTION" or similar
+        if re.match(r'^(CHAPTER|SECTION|PART|BOOK|ARTICLE)\s+', first_line, re.IGNORECASE):
+            return True
+
+        return False
 
     def format_text(self, chunk: str) -> Dict[str, Any]:
         """Format a text chunk according to the specified format type."""
@@ -151,6 +226,7 @@ Split modes:
   document   - Treat entire file as one record
   line       - Split by lines
   paragraph  - Split by double newlines (default)
+  section    - Auto-detect sections by headers (all-caps, numbered, etc.)
   custom     - Split by custom delimiter
         """
     )
@@ -176,7 +252,7 @@ Split modes:
 
     parser.add_argument(
         '-m', '--mode',
-        choices=['document', 'line', 'paragraph', 'custom'],
+        choices=['document', 'line', 'paragraph', 'section', 'custom'],
         default='paragraph',
         help='Text splitting mode (default: paragraph)'
     )

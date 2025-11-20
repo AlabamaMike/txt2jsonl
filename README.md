@@ -55,7 +55,7 @@ sudo cp txt2jsonl.py /usr/local/bin/txt2jsonl
 |--------|-------------|---------|
 | `-o, --output` | Output JSONL file path (required) | - |
 | `-f, --format` | Output format: text, chat, instruction, completion | text |
-| `-m, --mode` | Split mode: document, line, paragraph, custom | paragraph |
+| `-m, --mode` | Split mode: document, line, paragraph, section, custom | paragraph |
 | `-d, --delimiter` | Custom delimiter (use with `-m custom`) | - |
 | `-s, --system-message` | System message for chat format | - |
 | `-r, --role` | Role for chat messages: user, assistant, system | assistant |
@@ -112,7 +112,23 @@ Treat entire file as one record:
 ./txt2jsonl.py input.txt -o output.jsonl -m document
 ```
 
-#### 5. Custom Delimiter
+#### 5. Section Mode
+
+Automatically detect and group sections by headers (ideal for books, articles, philosophical texts):
+
+```bash
+./txt2jsonl.py epictetus.txt -o output.jsonl -m section
+```
+
+This mode detects section headers using patterns like:
+- All-caps titles (e.g., "INTRODUCTION", "CHAPTER ONE")
+- Titles ending with `.—` (common in classical texts)
+- Numbered sections (e.g., "1. Getting Started")
+- Keywords like "CHAPTER", "SECTION", "PART", "BOOK"
+
+Each section (header + all following paragraphs) becomes one JSONL record.
+
+#### 6. Custom Delimiter
 
 Split text using a custom delimiter:
 
@@ -120,7 +136,7 @@ Split text using a custom delimiter:
 ./txt2jsonl.py input.txt -o output.jsonl -m custom --delimiter='---'
 ```
 
-#### 6. Batch Processing
+#### 7. Batch Processing
 
 Combine multiple files into one JSONL output:
 
@@ -128,7 +144,7 @@ Combine multiple files into one JSONL output:
 ./txt2jsonl.py file1.txt file2.txt file3.txt -o combined.jsonl
 ```
 
-#### 7. Instruction-Response Format
+#### 8. Instruction-Response Format
 
 Useful for instruction fine-tuning:
 
@@ -138,7 +154,7 @@ Useful for instruction fine-tuning:
 
 The tool will try to split each chunk with the first line as instruction and the rest as response.
 
-#### 8. Prompt-Completion Format
+#### 9. Prompt-Completion Format
 
 For completion-based training:
 
@@ -211,6 +227,7 @@ The `examples/` directory contains sample input files and their corresponding ou
 - `sample_text.txt` - Basic text paragraphs
 - `conversation.txt` - Q&A style content
 - `instructions.txt` - Instruction-response pairs
+- `epictetus.txt` - Philosophical text with section headers (great for testing section mode)
 - `output_*.jsonl` - Example outputs in various formats
 
 Try them out:
@@ -224,10 +241,11 @@ Try them out:
 1. **Paragraph splitting** (default) works best for prose and documentation
 2. **Line splitting** is ideal for lists, one-liners, or pre-formatted data
 3. **Document mode** is useful when you want one record per file
-4. **Custom delimiter** gives you full control over chunking
-5. Use **verbose mode** (`-v`) to see processing details
-6. The **chat format** with system messages is great for fine-tuning conversational models
-7. For large datasets, process files in batches and combine the JSONL outputs
+4. **Section mode** automatically groups content by headers - perfect for books, articles, academic papers, and philosophical texts
+5. **Custom delimiter** gives you full control over chunking
+6. Use **verbose mode** (`-v`) to see processing details
+7. The **chat format** with system messages is great for fine-tuning conversational models
+8. For large datasets, process files in batches and combine the JSONL outputs
 
 ## Common Patterns
 
@@ -244,6 +262,11 @@ Try them out:
 ### Converting code documentation:
 ```bash
 ./txt2jsonl.py docs/*.txt -o docs.jsonl -m document
+```
+
+### Processing books or philosophical texts by sections:
+```bash
+./txt2jsonl.py philosophy_book.txt -o training.jsonl -m section -f chat
 ```
 
 ## Troubleshooting
