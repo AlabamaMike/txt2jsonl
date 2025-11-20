@@ -1,0 +1,8 @@
+What is Python?
+Python is a high-level, interpreted programming language known for its simplicity and readability. It was created by Guido van Rossum and first released in 1991.
+
+How do I install Python?
+You can install Python by downloading it from python.org. Most Linux distributions come with Python pre-installed. You can check by running 'python --version' in your terminal.
+
+What is a virtual environment?
+A virtual environment is an isolated Python environment that allows you to install packages without affecting the system-wide Python installation. You can create one using 'python -m venv myenv'.

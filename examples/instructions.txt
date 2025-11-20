@@ -1,0 +1,15 @@
+Explain what a variable is in programming
+A variable is a named storage location in computer memory that holds a value. Variables can store different types of data such as numbers, strings, or more complex objects. The value stored in a variable can be changed during program execution.
+---
+Write a function to calculate factorial
+Here's a Python function to calculate factorial:
+
+def factorial(n):
+    if n == 0 or n == 1:
+        return 1
+    return n * factorial(n - 1)
+
+This uses recursion to calculate the factorial of a number.
+---
+What is the difference between a list and a tuple in Python?
+A list is mutable, meaning you can modify it after creation by adding, removing, or changing elements. A tuple is immutable - once created, it cannot be modified. Lists use square brackets [], while tuples use parentheses ().
